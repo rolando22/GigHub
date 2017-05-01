@@ -1,0 +1,101 @@
+﻿@model IEnumerable<GigHub.Core.Models.Gig>
+@{
+    ViewBag.Title = "Gigs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>My Gigs</h2>
+@Html.ActionLink("Add New Gig", "New", "Gig", null, new { @class = "btn btn-primary" })<br/>
+@*@if (!Model.Any())
+{
+    <p>There are no gigs to list</p>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Venue</th>
+                <th>Date</th>
+                <th>Genre</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var gig in Model)
+            {
+                <tr>
+                    <td>@Html.ActionLink(gig.Venue, "Edit", "Gig", new { id = gig.Id }, null)</td>
+                    <td>@gig.Date</td>
+                    <td>@gig.Genre.Name</td>
+                    <td>@Html.ActionLink("Delete", "Delete", "Gig", new { id = gig.Id }, new { @class = "btn btn-danger" })</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}*@
+<table id="myGigs" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Venue</th>
+            <th>Date</th>
+            <th>Genre</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var table = $("#myGigs").DataTable({
+                ajax: {
+                    url: "/api/gigs",
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "venue",
+                        render: function (data, type, gig) {
+                            return "<a href='/gig/edit/" + gig.id + "'>" + gig.venue + "</a>";
+                        }
+                    },
+                    {
+                        data: "date",
+                        render: function (data) {
+                            return moment(data).format("LL");
+                        }
+                    },
+                    {
+                        data: "genre.name"
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<button class='btn btn-danger js-delete' data-gig-id=" + data + ">Delete</button>";
+                        }
+                    }
+                ],
+                order: [1, 'desc']
+            });
+
+            $("#myGigs").on("click", ".js-delete", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/gigs/" + button.attr("data-gig-id"),
+                    method: "DELETE",
+                    success: function () {
+                        table.row(button.parents("tr")).remove().draw();
+                        toastr.success("Gig successfully removed.");
+                    },
+                    error: function () {
+                        toastr.error("Something unexpected happened.");
+                    }
+                });
+            });
+        });
+    </script>
+}
+

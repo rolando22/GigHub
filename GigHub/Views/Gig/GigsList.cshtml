@@ -1,0 +1,119 @@
+﻿@model IEnumerable<GigHub.Core.ViewModels.AttendanceFormViewModel>
+@{
+    ViewBag.Title = "All Gigs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>All Gigs</h2>
+@*@if (!Model.Any())
+{
+    <p>There are no gigs to list</p>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Artist</th>
+                <th>Venue</th>
+                <th>Date</th>
+                <th>Genre</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vm in Model)
+            {
+                <tr>
+                    <td>@vm.Gig.Artist.ArtisticName</td>
+                    <td>@vm.Gig.Venue</td>
+                    <td>@vm.Gig.Date</td>
+                    <td>@vm.Gig.Genre.Name</td>
+                    @if (vm.Attendance)
+                    {
+                        <td>@Html.ActionLink("Unattendance", "Unattendance", "User", new { attendanceId = vm.Id }, new { @class = "btn btn-danger" })</td>
+                    }
+                    else
+                    {
+                        <td>@Html.ActionLink("Attendance", "Attendance", "User", new { gigId = vm.Gig.Id }, new { @class = "btn btn-success" })</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}*@
+<table id="gigs" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Artist</th>
+            <th>Venue</th>
+            <th>Date</th>
+            <th>Genre</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var table = $("#gigs").DataTable({
+                ajax: {
+                    url: "/api/attendances",
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "gig.artist.artisticName"
+                    },
+                    {
+                        data: "gig.venue"
+                    },
+                    {
+                        data: "gig.date",
+                        render: function (data) {
+                            return moment(data).format("LL");
+                        }
+                    },
+                    {
+                        data: "gig.genre.name"
+                    },
+                    {
+                        data: "attendance",
+                        render: function (data, type, vm) {
+                            if (data) {
+                                return "<button class='btn btn-default js-unattendance' data-attendace-id=" + vm.id + ">Unattendance</button>";
+                            } else {
+                                return "<button class='btn btn-default js-attendance' data-gig-id= " + vm.gig.id + ">Attendance</button>"
+                            }
+                        }
+                    }
+                ]
+            });
+
+            $("#gigs").on("click", ".js-unattendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-attendace-id"),
+                    method: "DELETE",
+                    success: function () {
+                        table.ajax.reload();
+                    }
+                });
+            });
+
+            $("#gigs").on("click", ".js-attendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-gig-id"),
+                    method: "POST",
+                    success: function () {
+                        table.ajax.reload();
+                    }
+                });
+            });
+        });
+    </script>
+}

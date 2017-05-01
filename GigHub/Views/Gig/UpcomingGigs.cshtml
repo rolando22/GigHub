@@ -1,0 +1,80 @@
+﻿@model GigHub.Core.Models.ApplicationUser
+@{
+    ViewBag.Title = "Upcoming Gigs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 id="artist" data-artist-id="@Model.Id">@Model.ArtisticName's Upcoming Gigs</h2>
+<br/>
+<table id="upcomingGigs" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Venue</th>
+            <th>Date</th>
+            <th>Genre</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var table = $("#upcomingGigs").DataTable({
+                ajax: {
+                    url: "/api/attendances/myattendances/" + $("#artist").attr("data-artist-id"),
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "gig.venue"
+                    },
+                    {
+                        data: "gig.date",
+                        render: function (data) {
+                            return moment(data).format("LL");
+                        }
+                    },
+                    {
+                        data: "gig.genre.name"
+                    },
+                    {
+                        data: "attendance",
+                        render: function (data, type, vm) {
+                            if (data) {
+                                return "<button class='btn btn-default js-unattendance' data-attendace-id=" + vm.id + ">Unattendance</button>";
+                            } else {
+                                return "<button class='btn btn-default js-attendance' data-gig-id= " + vm.gig.id + ">Attendance</button>"
+                            }
+                        }
+                    }
+                ],
+                order: [1, 'desc']
+            });
+
+            $("#upcomingGigs").on("click", ".js-unattendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-attendace-id"),
+                    method: "DELETE",
+                    success: function () {
+                        table.ajax.reload();
+                    }
+                });
+            });
+
+            $("#upcomingGigs").on("click", ".js-attendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-gig-id"),
+                    method: "POST",
+                    success: function () {
+                        table.ajax.reload();
+                    }
+                });
+            });
+        });
+    </script>
+}

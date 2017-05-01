@@ -1,0 +1,65 @@
+﻿@model IEnumerable<GigHub.Core.Models.Inbox>
+@{
+    ViewBag.Title = "Notifications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Notifications</h2>
+<br/>
+@*@foreach (var inbox in Model)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <p>Date: @inbox.Notification.Date</p>
+            <p>Information: @inbox.Notification.Information</p>
+            <p>Gig´s Date: @inbox.Notification.GigDate</p>
+        </div>
+    </div>
+    <br />
+}*@
+<h3>Not Viewed</h3>
+<div class="row" id="notviewed"></div>
+<br/>
+<h3>Viewed</h3>
+<div class="row" id="viewed"></div>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var viewed = $("#viewed");
+            var notViewed = $("#notviewed");
+            $.ajax({
+                url: "/api/inboxes",
+                method: "GET",
+                success: function (data) {
+                    $.each(data, function (index, value) {
+                        var notification;
+                        if (value.notification.gig == 0) {
+                            notification = "<div class='col-md-12 panel panel-default'>" +
+                                "<div class='panel-heading'>Date: " + moment(value.notification.date).format("LL") + "</div>" +
+                                "<div class='panel-body'><p>Information: " + value.notification.information + "</p>" +
+                                "<p>Gig's Date: " + date(value.notification.gigDate) + "</p></div></div><br />";
+                        } else {
+                            notification = "<div class='col-md-12 panel panel-default'>" +
+                                "<div class='panel-heading'>Date: " + moment(value.notification.date).format("LL") + "</div>" +
+                                "<div class='panel-body'><p>Information: " + value.notification.information + "</p>" +
+                                "<a href='/gig/detail/" + value.notification.gig + "'><p>Gig's Date: " +
+                                date(value.notification.gigDate) + "</p></a></div></div><br />";
+                        }
+                        if (value.viewed) {
+                            viewed.append(notification);
+                        } else {
+                            notViewed.append(notification);
+                        }
+                        
+                    });
+                }
+            });
+
+            function date(gigDate) {
+                return moment(gigDate, "DD/MM/YYYY hh:mm:ss a").format("LL")
+            }
+        });
+    </script>
+}

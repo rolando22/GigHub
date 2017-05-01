@@ -1,0 +1,59 @@
+﻿@model int
+@{
+    ViewBag.Title = "Detail Gig";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Detail</h2>
+<br/>
+<div id="gig" class="row" data-gig-id="@Model"></div>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "/api/gigs/" + $("#gig").attr("data-gig-id"),
+                method: "GET",
+                success: function (vm) {
+                    var gig = "<div class='col-md-6'>" +
+                        "<div class='col-md-12'><div class='col-md-6'>Venue: </div><div class='col-md-6'>" + vm.gig.venue + "</div></div>" +
+                        "<div class='col-md-12'><div class='col-md-6'>Date: </div><div class='col-md-6'>" + moment(vm.gig.date).format("LL") + "</div></div>" +
+                        "<div class='col-md-12'><div class='col-md-6'>Genre: </div><div class='col-md-6'>" + vm.gig.genre.name + "</div></div>" +
+                        "<div class='col-md-12'><div class='col-md-offset-6'>";
+                    if (vm.attendance) {
+                        gig += "<button class='btn btn-default js-unattendance' data-attendace-id=" + vm.id + ">Unattendance</button></div></div></div>";
+                    } else {
+                        gig += "<button class='btn btn-default js-attendance' data-gig-id= " + vm.gig.id + ">Attendance</button></div></div></div>";
+                    }
+                    $("#gig").append(gig);
+                }
+            });
+
+            $("#gig").on("click", ".js-unattendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-attendace-id"),
+                    method: "DELETE",
+                    success: function (data) {
+                        button.parent("div").append("<button class='btn btn-default js-attendance'" +
+                            " data-gig-id=" + data + ">Attendance</button>");
+                        button.remove();
+                    }
+                });
+            });
+
+            $("#gig").on("click", ".js-attendance", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/attendances/" + button.attr("data-gig-id"),
+                    method: "POST",
+                    success: function (data) {
+                        button.parent("div").append("<button class='btn btn-default js-unattendance'" +
+                            " data-attendace-id=" + data + ">Unattendance</button>");
+                        button.remove();
+                    }
+                });
+            });
+        });
+    </script>
+}

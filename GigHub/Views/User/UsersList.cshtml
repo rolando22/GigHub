@@ -1,0 +1,157 @@
+﻿@model IEnumerable<GigHub.Core.ViewModels.FollowUpFormViewModel>
+@{
+    ViewBag.Title = "Artists";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Artists List</h2>
+
+@*<div class="row">
+    @foreach (var vm in Model)
+    {
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-12">@vm.Artist.ArtisticName</div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <img src="~/Content/Img/@vm.Artist.Image" height="300" width="300"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2">Email: </div>
+                <div class="col-md-10">@vm.Artist.Email</div>
+                <div class="col-md-4">Total Gigs: </div>
+                <div class="col-md-8">@vm.TotalGigs</div>
+                <div class="col-md-4">Upcoming Gigs: </div>
+                <div class="col-md-8">@vm.UpcomingGigs</div>
+            </div>
+            <div class="row">
+                <div class="col-md-offset-6">
+                    @if (vm.Follow)
+                    {
+                        @Html.ActionLink("Unfollow", "Unfollow", "User", new { followUpId = vm.Id }, new { @class = "btn btn-default" })
+                    }
+                    else
+                    {
+                        @Html.ActionLink("Follow", "Follow", "User", new { followedId = vm.Artist.Id }, new { @class = "btn btn-default" })
+                    }                   
+                </div>
+            </div>
+            <br/>
+        </div>
+    }
+</div>*@
+<br/>
+<div class="row">
+    <div class="col-md-10 form-group">
+        <div class="col-md-2">
+            <label>Search: </label>
+        </div>
+        <div class="col-md-8 tt-container">
+            <input class="form-control" id="artist" name="artist" type="text" placeholder="Search artist"/>
+        </div>
+    </div>
+</div>
+<br/>
+<div id="artists" class="row"></div>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            var artists = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('artisticName'),
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    url: "/api/users?query=%QUERY",
+                    wildcard: '%QUERY'
+                }
+            });
+
+            var list = $("#artists");
+            function load(data) {
+                $.each(data, function (index, value) {
+                    var artist = "<div class='col-md-6'>" +
+                        "<div class='row'>" +
+                        "<div class='col-md-12'>" + value.artist.artisticName + "</div></div>" +
+                        "<div class='row'>" +
+                        "<div class='col-md-12'><img src='../Content/Img/" + value.artist.image + "' height='300' width='300'/></div></div>" +
+                        "<div class='row'>" +
+                        "<div class='col-md-2'>Email: </div><div class='col-md-10'>" + value.artist.email + "</div>" +
+                        "<div class='col-md-4'>Total Gigs: </div><div class='col-md-8'>" + value.totalGigs + "</div>" +
+                        "<a href='/gig/upcomingGigs/" + value.artist.id + "'><div class='col-md-4'>" +
+                        "Upcoming Gigs: </div><div class='col-md-8'>" + value.upcomingGigs + "</div></a></div>" +
+                        "<div class='row'>" +
+                        "<div class='col-md-offset-6'>";
+                    if (value.follow)
+                        artist += "<button class='btn btn-default js-unfollow' data-followup-id=" + value.id +
+                            ">Unfollow</button></div></div></div>";
+                    else
+                        artist += "<button class='btn btn-default js-follow' data-followed-id=" + value.artist.id +
+                            ">Follow</button></div></div></div>";
+                    list.append(artist);
+                });
+            }
+
+            $("#artist").typeahead({
+                minLength: 3,
+                highlight: true
+            }, {
+                name: 'artists',
+                display: 'artisticName',
+                source: artists
+            }).on("typeahead:select", function (e, artist) {
+                var listfilter = _.filter(listArtists, function (vm) {
+                    return vm.artist.artisticName == artist.artisticName;
+                });
+                list.empty();
+                load(listfilter);
+            });
+            
+            var listArtists;
+            $.ajax({
+                url: "/api/followups",
+                method: "GET",
+                success: function (data) {
+                    listArtists = data;
+                    load(data);
+                }
+            });
+
+            $("#artist").keyup(function () {
+                if ($.trim(this.value) == '')
+                {
+                    list.empty();
+                    load(listArtists);
+                }
+            });
+
+            $("#artists").on("click", ".js-unfollow", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/followups/" + button.attr("data-followup-id"),
+                    method: "DELETE",
+                    success: function (data) {
+                        button.parent("div").append("<button class='btn btn-default js-follow'" +
+                            " data-followed-id=" + data + ">Follow</button>");
+                        button.remove();
+                    }
+                });
+            });
+
+            $("#artists").on("click", ".js-follow", function () {
+                var button = $(this);
+                $.ajax({
+                    url: "/api/followups/" + button.attr("data-followed-id"),
+                    method: "POST",
+                    success: function (data) {
+                        button.parent("div").append("<button class='btn btn-default js-unfollow'" +
+                            " data-followup-id=" + data + ">Unfollow</button>");
+                        button.remove();
+                    }
+                });
+            });
+        });
+    </script>
+}

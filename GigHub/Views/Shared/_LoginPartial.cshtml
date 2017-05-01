@@ -1,0 +1,49 @@
+﻿@using Microsoft.AspNet.Identity
+@if (Request.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+    @Html.AntiForgeryToken()
+
+    <ul class="nav navbar-nav navbar-right">
+        <li class="" id="notification" data-is-auth="@Request.IsAuthenticated">@Html.ActionLink("Notifications ", "List", "Inbox", null, new { id = "notificationsLink", data_isAuth = Request.IsAuthenticated , @class =""})</li>
+        <li>@Html.ActionLink("My upcoming Gigs", "List", "Gig")</li>
+        <li>@Html.ActionLink("Gig Feed", "GigFeed", "Gig")</li>
+        <li>@Html.ActionLink("Gigs", "ListAll", "Gig")</li>
+        <li>@Html.ActionLink("Artists", "List", "User")</li>
+        <li>
+            @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "Index", "Manage", routeValues: null, htmlAttributes: new { title = "Manage" })
+        </li>
+        <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off</a></li>
+    </ul>
+    
+    }
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("Register", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })</li>
+        <li>@Html.ActionLink("Log in", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    </ul>
+}
+@Scripts.Render("~/bundles/lib")
+    <script>
+        $(document).ready(function () {
+            if ($("#notification").attr("data-is-auth"))
+                $.ajax({
+                    url: "/api/inboxes/notviews",
+                    method: "GET",
+                    success: function (data) {
+                        if (data.length != 0) {
+                            $("#notificationsLink").append("<span id='length' class='badge'>" + data.length + " News</span");
+                            $("#notification").addClass("animated infinite tada");
+                        }
+                        else {
+                            $("#length").remove();
+                            $("#notification").removeClass("animated infinite shake");
+                        }
+                    }
+                });
+            
+        });
+    </script>
